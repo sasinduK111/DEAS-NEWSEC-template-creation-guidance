@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voucher Validation & Rules Engine</title>
+<style>
+/* Base Setup */
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+body {
+display: flex;
+background-color: #f8fafc;
+color: #1e293b;
+height: 100vh;
+overflow: hidden;
+}
+/* Fixed Navigation Sidebar */
+.sidebar {
+width: 320px;
+background-color: #0f172a;
+color: #f8fafc;
+padding: 24px 16px;
+overflow-y: auto;
+border-right: 1px solid #1e293b;
+display: flex;
+flex-direction: column;
+}
+.sidebar h2 {
+font-size: 1.1rem;
+margin-bottom: 24px;
+color: #38bdf8;
+text-transform: uppercase;
+letter-spacing: 1px;
+padding-left: 8px;
+border-left: 3px solid #38bdf8;
+}
+.sidebar ul {
+list-style: none;
+}
+.sidebar ul li a {
+display: block;
+color: #94a3b8;
+padding: 10px 12px;
+text-decoration: none;
+border-radius: 6px;
+margin-bottom: 4px;
+font-size: 0.95rem;
+text-overflow: ellipsis;
+white-space: nowrap;
+overflow: hidden;
+transition: all 0.2s ease;
+}
+.sidebar ul li a:hover {
+background-color: #1e293b;
+color: #fff;
+}
+/* Main Content Container */
+.main-content {
+flex: 1;
+padding: 40px 60px;
+overflow-y: auto;
+scroll-behavior: smooth;
+}
+.page-header {
+margin-bottom: 40px;
+padding-bottom: 20px;
+border-bottom: 1px solid #e2e8f0;
+}
+.page-header h1 {
+font-size: 2rem;
+color: #0f172a;
+}
+.page-header p {
+color: #64748b;
+margin-top: 5px;
+}
+/* Document Sections */
+.topic-section {
+margin-bottom: 50px;
+background: #ffffff;
+padding: 35px;
+border-radius: 12px;
+border: 1px solid #e2e8f0;
+box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.topic-section h2 {
+color: #0f172a;
+font-size: 1.5rem;
+margin-bottom: 15px;
+padding-bottom: 8px;
+border-bottom: 2px solid #e2e8f0;
+}
+.sub-topic {
+margin-top: 25px;
+margin-bottom: 15px;
+color: #334155;
+font-size: 1.2rem;
+padding-left: 10px;
+border-left: 3px solid #0284c7;
+}
+.sub-topic1 {
+margin-top: 25px;
+margin-bottom: 15px;
+color: #334155;
+font-size: 0.9rem;
+padding-left: 10px;
+border-left: 3px solid #0284c7;
+}
+.block-title {
+font-size: 0.95rem;
+font-weight: 600;
+color: #64748b;
+text-transform: uppercase;
+margin-top: 15px;
+margin-bottom: 6px;
+letter-spacing: 0.5px;
+}
+/* Technical Code Blocks */
+.code-container {
+position: relative;
+background-color: #1e1e2e;
+border-radius: 8px;
+margin-bottom: 18px;
+padding: 16px;
+padding-top: 48px;
+border: 1px solid #2d2d3d;
+}
+.code-container pre {
+margin: 0;
+overflow-x: auto;
+}
+.code-container code {
+font-family: 'Fira Code', Consolas, Monaco, monospace;
+color: #a6accd;
+font-size: 0.9rem;
+display: block;
+line-height: 1.6;
+}
+/* Clipboard UI Element */
+.copy-btn {
+position: absolute;
+top: 12px;
+right: 12px;
+background-color: #313244;
+color: #cdd6f4;
+border: none;
+padding: 6px 12px;
+font-size: 0.75rem;
+font-weight: 500;
+border-radius: 4px;
+cursor: pointer;
+transition: all 0.2s ease;
+}
+.copy-btn:hover {
+background-color: #38bdf8;
+color: #0f172a;
+}
+.copy-btn.copied {
+background-color: #10b981;
+color: #ffffff;
+}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+<h2>Voucher Structure</h2>
+<ul>
+<li><a href="#t1">1. Voucher Type</a></li>
+<li><a href="#t2">2. Voucher Number</a></li>
+<li><a href="#t3">3. Date Details</a></li>
+<li><a href="#t4">4. Currency</a></li>
+<li><a href="#t5">5. Amounts</a></li>
+<li><a href="#t6">6. Account Details</a></li>
+<li><a href="#t7">7. Supplier Details</a></li>
+<li><a href="#t8">8. Customer Details</a></li>
+<li><a href="#t9">9. References</a></li>
+<li><a href="#t10">10. Delivery Details</a></li>
+<li><a href="#t11">11. Product Lines</a></li>
+<li><a href="#t12">12. Common Rules</a></li>
+</ul>
+</nav>
+<main class="main-content">
+<div class="page-header">
+<h1>Rules and Validations</h1>
+<p>All the rules and validations used for DEAS and NEWSEC</p>
+</div>
+<section id="t1" class="topic-section">
+<h2>1. Voucher Type</h2>
+<div class="block-title">i. Rule</div>
+<div class="code-container">
+<button class="copy-btn" onclick="copySnippet(this)">Copy</button>
+<pre><code>function field(value) {
+const ocr = "%ocr%";
+const creditPattern = new RegExp(
+     [
+      "Kreditnota",
+      "KREDITNOTA",
+      "KREDITNOTE",
+      "Kreditnote",
+      "CREDITNOTA",
+      "CREDITNOTE",
+      "Creditnote",
+      "Creditnota",
+      "Credit Invoice",
+      "Kreditnotu",
+      "KREDIT NOTE",
+      "KREDIT NOTA",
+      "Credit note",
+      "Credit nota",
+      "Kredit nota",
+      "Kredit note",
+      "Credit Faktura",
+      "Cancellation Invoice",
+      "Invoice correction",
+      "Cancellering Invoice",
+      "Salgskreditnota",
+      "Kreditfaktura",
+      "Creditfaktura",
+      "Kredittfaktura",
+      "KREDITFAKTURA",
+      "CANCELLATION INVOICE",
+      "FAKTURAKANSELLERING",
+      "Fakturakansellering",
+      "CREDIT MEMO",
+      "Credit Memo",
+      "Kredit Memo",
+      "KREDIT MEMO",
+      "Credit memo",
+      "credit memo",
+      "Kredit memo",
+      "kredit memo",
+      "Credit Note",
+      "CREDIT NOTA",
+      "CREDIT NOTE",
+      "Credit Nota",
+      "Kredit Note",
+      "Kredit Nota",
+      "Credit  Note",
+      "Kr.nota",
+      "Annullering faktura",
+      "CREDIT INVOICE",
+      "Afregningsbilag",
+      "Afregningsnota"
+     ].join("|"),
+     "i"
+);
+if (creditPattern.test(ocr)) {
+     return "IncomingCreditNote;IncomingVoucher";
+}
+return "IncomingVoucher;IncomingCreditNote";
+}</code></pre>
+</div>
+<div class="block-title">ii. Validation</div>
+<div class="code-container">
+<button class="copy-btn" onclick="copySnippet(this)">Copy Validation</button>
+<pre><code>v => !!v || 'Must be filled in'</code></pre>
+</div>
+</section>
+<section id="t2" class="topic-section">
+    <h2>2. Voucher Number</h2>
+
+     <a href="#t12-ocr-extraction" class="block-title">i. Rule</a>
+     <p>You can use ocr extraction or location extraction method</p>
+
+    <div class="block-title">ii. Validation</div>
+    <div class="code-container">
+        <button class="copy-btn" onclick="copySnippet(this)">Copy Validation</button>
+        <pre><code>v =>/^[0-9]+$/.test(v)|| 'Not valide.'</code></pre>
+    </div>
+</section>
+<section id="t3" class="topic-section">
+<h2>3. Date</h2>
+<h3 class="sub-topic">a. Voucher Date</h3>
+<div id="t3vdate" class="block-title">i. Rule</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>function field(value) {
+    const ocr = "%ocr%";
+    let match = null;
+
+    const regexArr = [
+        /Faktura\/betalingsdato\s([0-9]{1,2})[.,\s]+([A-Za-z]+)\s([0-9]{2,4})\s/
+    ];
+
+    const monthMap = {
+    januar: "01",
+    februar: "02",
+    marts: "03",
+    april: "04",
+    maj: "05",
+    juni: "06",
+    juli: "07",
+    august: "08",
+    september: "09",
+    oktober: "10",
+    november: "11",
+    december: "12"
+};
+
+    for (var i = 0; i < regexArr.length; i++) {
+        match = ocr.match(regexArr[i]);
+        if (match) break;
+    }
+
+    if (!match) return "";
+
+    var day = match[1];
+    if (day.length === 1) day = "0" + day;
+
+    var monthText = match[2].toLowerCase();
+    var month = monthMap[monthText] || "";
+
+    var year = match[3];
+    if (year.length === 2) {
+        year = "20" + year;
+    }
+
+    return year + "-" + month + "-" + day;
+}</code></pre></div>
+<div class="block-title">ii. Rule - Format date</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>
+  function field(value) {
+    const a = value.replace(/[.,-]/g,'');
+    const day = a.slice(0,2);
+    const month = a.slice(2,4);
+    const year  = a.slice(4,6);
+    const d = day.toString() + '.' + month.toString() + '.' + year.toString();
+    const x = '20' +  year.toString() + '-' + month.toString() + '-' + day.toString();
+    return x;
+}
+  </code></pre></div>
+<div class="block-title">iii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^[0-9]{1,2}[\.\,\-\/\s]+[0-9]{1,2}[\.\,\-\/\s]+[0-9]{2,4}$/.test(v) ||'Must contain valid date format - dd.mm.yyyy'</code></pre></div>
+<h3 class="sub-topic">b. Due Date</h3>
+<a href="#t3vdate" class="block-title">i. Rule - You can use the same rule used for voucher date</a>
+<div class="block-title">ii. Rule - Get due from term</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>
+  function field(value) {						
+    const ocr = "%ocr%";						
+    const match = ocr.match(/Betalingsbetingelser: .*(\d{2}) dager/);						
+    const voucherDate = new Date('%f:Voucher Date%');						
+						
+    if (match) {						
+        const daysCount = parseFloat(match[1]);						
+        voucherDate.setDate(voucherDate.getDate() + daysCount);						
+        const yyyy = voucherDate.getFullYear();						
+        let mm = voucherDate.getMonth() + 1;						
+        let dd = voucherDate.getDate();						
+						
+    if(dd < 10) dd = '0' + dd;						
+        if(mm < 10) mm = '0' + mm;						
+        const formatDate = yyyy + '-' + mm + '-' + dd;						
+        return formatDate;						
+    }else{						
+        return value;						
+    }						
+}						
+</code></pre></div>
+<div class="block-title">iii. Rule - Add 30 days to the invoice date</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>
+  function field(value) {					
+const dropValue = String('%f:Voucher Type%');					
+const voucherDate =  new Date ('%f:Voucher Date%');					
+					
+if (dropValue === 'IncomingCreditNote' && String(value) === '') {					
+ voucherDate.setDate(voucherDate.getDate() + 30);					
+					
+const yyyy = voucherDate.getFullYear();					
+					
+let mm = voucherDate.getMonth() + 1;					
+					
+let dd = voucherDate.getDate();					
+					
+if(dd < 10) dd = '0' + dd;					
+					
+ if(mm < 10) mm = '0' + mm;					
+					
+const formatDate = yyyy + '-' + mm + '-' + dd;					
+					
+ return formatDate;					
+					
+} else {					
+ return value;					
+ }					
+}					
+</code></pre></div>
+<div class="block-title">iv. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^[0-9]{1,2}[\.\,\-\/\s]+[0-9]{1,2}[\.\,\-\/\s]+[0-9]{2,4}$/.test(v) ||'Must contain valid date format - dd.mm.yyyy'</code></pre></div>
+<h3 class="sub-topic">c. Delivery Date</h3>
+<a href="#t3vdate" class="block-title">i. Rule - You can use the same rule used for voucher date</a>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^[0-9]{1,2}[\.\,\-\/\s]+[0-9]{1,2}[\.\,\-\/\s]+[0-9]{2,4}$/.test(v) ||'Must contain valid date format - dd.mm.yyyy'</code></pre></div>
+</section>
+<section id="t4" class="topic-section">
+<h2>4. Currency</h2>
+<a href="#t12-ocr-extraction" class="block-title">i. Rule</a>
+     <p>You can use ocr extraction or location extraction method</p>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^DKK$/.test(v)|| 'Must contain valid Currency -  E.g. DKK'</code></pre></div>
+</section>
+<section id="t5" class="topic-section">
+<h2>5. Amounts</h2>
+<h3 class="sub-topic">a. Vat Check</h3>
+<a href="#t12-ocr-extraction" class="block-title">i. Rule</a>
+     <p>You can use ocr extraction or location extraction method</p>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Number Format</button><pre><code>[0-9\s\.\,]+[\.\,]{1}[0-9]{2}</code></pre></div>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^[0-9\-]+[\.]{1}[0-9]{2}$/.test(v)|| 'Not an accepted amount.'</code></pre></div>
+<h3 class="sub-topic">b. Vat Including Amount</h3>
+<a href="#t12-ocr-extraction" class="block-title">i. Rule</a>
+     <p>You can use ocr extraction or location extraction method</p>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^[0-9\-]+[\.]{1}[0-9]{2}$/.test(v)|| 'Not an accepted amount.'</code></
+pre></div>
+</section>
+<section id="t6" class="topic-section">
+<h2>6. Account Details</h2>
+<h3 class="sub-topic">a. Fik</h3>
+<div class="block-title">i. Rule - GET FIK</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>function field(value) {
+    const noSpace = "%ocr:0,1,2,3,4,5,secondlast,last%".replace(/\s/g, "");
+    let match = [];
+    const regexArr = [
+        /[\>\+]{1}[\d]{2}[<]{1}[\d]+[\+]{1}[\d]{8}/,
+    ];
+  
+    for (let regex of regexArr) {
+        match = noSpace.match(regex);
+    }
+  
+    if (match) {
+        return match[0].trim();
+    }
+  
+    return "";
+}</code></pre></div>
+<div class="block-title">ii. Rule - FIK Formatter</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>function field(value) {
+  if (String(value) === "") {
+    return "";
+  }
+
+  if (value.length < 22) {
+    return value;
+  }
+
+  const nospace = String(value).replace(/\s/g, "");
+  return checkFik(nospace);
+}
+
+function checkFik(checkVal) {
+  const chrList = ["<", "v"];
+
+  for (let chr of chrList) {
+    const lowerCaseVal = checkVal.toLowerCase();
+    const charCount = (lowerCaseVal.match(new RegExp(chr, "g")) || []).length;
+
+    if (charCount > 1) {
+      const index = lowerCaseVal.indexOf(chr, lowerCaseVal.indexOf(chr) + 1);
+      const str = lowerCaseVal.replace(new RegExp(chr, "g"), "<");
+      const part = str.substring(0, index);
+      return cleanFik(part);
+    }
+  }
+  return cleanFik(checkVal);
+}
+
+function cleanFik(fikVal) {
+    if (fikVal.length < 22) {
+        return fikVal;
+    }
+    
+    const cleanString = fikVal.replace(/[^\d\+\#<]/g, "");
+    const plusCount = (cleanString.match(new RegExp(/\+/, "g")) || []).length;
+    
+    if (plusCount > 1) {
+        const unescaped = cleanString.replace(/</g, "#");
+        const plusIndex = unescaped.indexOf("+");
+        const noplus = unescaped.slice(0, plusIndex) + unescaped.slice(plusIndex + 1);
+        return noplus;
+    }
+    
+    return cleanString.replace(/</g, "#");
+}</code></pre></div>
+<div class="block-title">iii. Validation</div>
+<div class="sub-topic1">1. If FIK must be filled in</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>function field(value){
+return /[0-9]{2}\#[0-9]+\+[0-9]{8}/.test(value)|| 'FIK must be filled';
+}
+</code></pre></div>
+<div class="sub-topic1">2. If FIK can be blank or filled</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v => v === '' || /[0-9]{2}#[0-9]+\+[0-9]+/.test(v) || 'Invalid FIK Format'</code></pre></div>
+<h3 class="sub-topic">b. Bank</h3>
+<a href="#t12-ocr-extraction" class="block-title">i. Rule</a>
+     <p>You can use ocr extraction or location extraction method</p>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^[0-9]{10}$/.test(v)|| 'Must contain valid format : Number Only'</code></pre></div>
+<h3 class="sub-topic">c. Reg</h3>
+<a href="#t12-ocr-extraction" class="block-title">i. Rule</a>
+     <p>You can use ocr extraction or location extraction method</p>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^[0-9]{4}$/.test(v)|| 'Must contain valid format : Number Only'</code></pre></div>
+<h3 class="sub-topic">d. Iban</h3>
+<a href="#t12-ocr-extraction" class="block-title">i. Rule</a>
+     <p>You can use ocr extraction or location extraction method</p>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^DK[0-9]{16}$/.test(v)|| 'Must contain valid format : Two letters and Numbers Only'</code></pre></div>
+<h3 class="sub-topic">e. Swift</h3>
+<a href="#t12-ocr-extraction" class="block-title">i. Rule</a>
+     <p>You can use ocr extraction or location extraction method</p>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^[A-Z0-9]{8}$/.test(v)|| 'Must contain valid format : Letters and Numbers Only'</code></pre></div>
+</section>
+<section id="t7" class="topic-section">
+<h2>7. Supplier Details</h2>
+<a href="#t12-ocr-extraction" class="block-title">i. Rule - extract org</a>
+     <p>You can use ocr extraction or keyword</p>
+<div class="block-title">ii. Rule - check id</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>function field(value) { 
+    if(value === '43744208'){
+        return value;
+    }
+    return 'Wrong Template pick!';
+}
+</code></pre></div>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v => /^[0-9]{8}$/.test(v) || 'Must be filled in, and length must be 8';
+
+function multiline()
+{
+    return v==="KBH EJENDOMSSERVICE A/S" || 'Not matched to the invoice'
+    return v==="Formervangen 28" || 'Not matched to the invoice'
+    return v==="Glostrup" || 'Not matched to the invoice'
+    return v==="2600" || 'Not matched to the invoice'
+    return v==="DK" || 'Not matched to the invoice'
+}</code></pre></div>
+</section>
+<section id="t8" class="topic-section">
+<h2>8. Customer Details</h2>
+<h3 class="sub-topic">a. Customer Name</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method. get data and then filter name</p>
+     <div class="block-title">ii. Rule - Filter name</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>function field(value) {
+    
+  
+    let match = [];
+    const regexArr = [
+        /(?:[Ww]\w?\d\w[\w-]+\*)?(?:[Ff][0-9]{5}\*)?(?:[0-9]+\*)?(.*?)\*.*/,
+        ];
+    
+    for(let regex of regexArr){
+        
+        match = value.match(regex);
+        
+        if(match) break;
+    }
+    
+    return match ? match[1].trim():"";
+}</code></pre></div>
+<div class="block-title">iii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v => /^[A-Za-zÀàÁáÂâÃãÄäÅåÆæÇçÈèÉéÊêËëÌìÍíÎîÏïÑñÒòÓóÔôÕõÖöØøÙùÚúÛûÜüÝýŸÿŒœ\s\/0-9\-\–\`\'\.\,\)\(\)\&\:\;\´]{3,50}$/.test(v) || 'Invalid Name'</code></pre></div>
+<h3 class="sub-topic">b. Customer Address</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method. get data and then filter address</p>
+     <div class="block-title">ii. Rule - Filter address</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>
+  function field(value) {
+    const custName = "%f:Customer Name%";
+
+    // First function logic
+    let match = null;
+    const extractRegexArr = [
+        /^(.*?\,[0-9]{4}(?:\s\p{L}+){1,3}\.?)\,?/,
+    ];
+
+    for (let regex of extractRegexArr) {
+        match = value.match(regex);
+        if (match) break;
+    }
+
+    let result = match ? match[1].trim() : "";
+
+    // Second function logic
+    if (result.includes(custName)) {
+        let clearmatch = result.replace(custName, '').trim();
+
+        const cleanRegexArr = [
+            /^[Ww]\w?\d\w?[\d-]+\,/,
+            /^\,/,
+            /\,\d{4}\s\p{L}+\s\p{L}+\s\p{L}+$/,
+            /\,\d{4}\s\p{L}+[.,\s]+\p{L}+$/,
+            /\,\d{4}\s\p{L}+$/,
+        ];
+
+        for (let regex of cleanRegexArr) {
+            clearmatch = clearmatch.replace(regex, '').trim();
+        }
+
+        return clearmatch;
+    }
+
+    return "";
+}
+  </code></pre></div>
+<div class="block-title">iii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v => /^[A-Za-zÀàÁáÂâÃãÄäÅåÆæÇçÈèÉéÊêËëÌìÍíÎîÏïÑñÒòÓóÔôÕõÖöØøÙùÚúÛûÜüÝýŸÿŒœ\s\/0-9\-\–\`\'\.\,\)\(\)\&\:\;\´]{3,80}$/.test(v) || 'Invalid Address'</code></pre></div>
+<h3 class="sub-topic">c. Customer City</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method. get data and then filter city</p>
+     <div class="block-title">ii. Rule - Filter city</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>function field(value) {
+    const custName = "%f:Customer Name%";
+    const custAdd = "%f:Customer Address%";
+
+    // First function logic
+    let match = null;
+    const extractRegexArr = [
+        /^(.*?\,[0-9]{4}(?:\s\p{L}+){1,3}\.?)\,?/,
+    ];
+
+    for (let regex of extractRegexArr) {
+        match = value.match(regex);
+        if (match) break;
+    }
+
+    let result = match ? match[1].trim() : "";
+
+    // Second function logic
+    if (result.includes(custName)&&result.includes(custAdd)) {
+        let clearmatch = result
+        .replace(custName, '')
+        .replace(custAdd, '')
+        .trim();
+
+        const cleanRegexArr = [
+/^[Ww]\w?\d\w?[\d-]+\,/,
+            /^\,/,
+ /[Ww]\w?\d?\w?[\w-]*$/,
+ /[Ff][\s\-]*[0-9]*$/,
+            /\,\d{4}/
+        ];
+
+        for (let regex of cleanRegexArr) {
+            clearmatch = clearmatch.replace(regex, '').trim();
+        }
+
+        return clearmatch;
+    }
+
+    return "";
+}</code></pre></div>
+<div class="block-title">iii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v => /^[A-Za-zÀàÁáÂâÃãÄäÅåÆæÇçÈèÉéÊêËëÌìÍíÎîÏïÑñÒòÓóÔôÕõÖöØøÙùÚúÛûÜüÝýŸÿŒœ\s\.\,\-]{3,20}$/.test(v) || 'Invalid City'</code></pre></div>
+<h3 class="sub-topic">d. Customer City Postal Code</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method. get data and then filter postal code</p>
+     <div class="block-title">ii. Rule - Filter postal code</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>
+  function field(value) {
+    const custName = "%f:Customer Name%";
+    const custAdd = "%f:Customer Address%";
+    const custCity = "%f:Customer City%";
+
+    // First function logic
+    let match = null;
+    const extractRegexArr = [
+        /^(.*?\,[0-9]{4}(?:\s\p{L}+){1,3}\.?)\,?/,
+    ];
+
+    for (let regex of extractRegexArr) {
+        match = value.match(regex);
+        if (match) break;
+    }
+
+    let result = match ? match[1].trim() : "";
+
+    // Second function logic
+    if (result.includes(custName)
+        &&result.includes(custAdd)
+        &&result.includes(custCity)) {
+            
+        let clearmatch = result
+        .replace(custName, '')
+        .replace(custAdd, '')
+        .replace(custCity, '')
+        .trim();
+
+        const cleanRegexArr = [
+/^[Ww]\w?\d\w?[\d-]+\,/,
+            /\,+/,
+/[Ww]\w?\d?\w?[\w-]*$/,
+ /[Ff][\s\-]*[0-9]*$/,
+           
+        ];
+
+        for (let regex of cleanRegexArr) {
+            clearmatch = clearmatch.replace(regex, '').trim();
+        }
+
+        return clearmatch;
+    }
+
+    return "";
+}
+</code></pre></div>
+<div class="block-title">iii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^[0-9]{4}$/.test(v)|| 'Invalid Postal code'</code></pre></div>
+<h3 class="sub-topic">e. Customer Country</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method. get data and then filter country</p>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v => /^[A-Z]{2}$/.test(v) || 'Invalid Country code'</code></pre></div>
+</section>
+<section id="t9" class="topic-section">
+<h2>9. References</h2>
+
+<h3 class="sub-topic">a. Order</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method or keyword.</p>
+<div class="block-title">ii. Validation - DEAS</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>v === 'Not Found' || /[Ww]\w?\d\w?[\d-]+/.test(v)|| 'Must be in the format'</code></pre></div>
+<div class="block-title">iii. Validation - NEWSEC</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>v === 'Not Found' || /[Ff][0-9]{5}/.test(v)|| 'Must be in the format'</code></pre></div>
+
+<h3 class="sub-topic">b. Supplier Ref</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method or keyword.</p>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v => !!v || 'Must be filled in'</code></pre></div>
+<h3 class="sub-topic">c. Customer Ref</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method or keyword.</p>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v => !!v || 'Must be filled in'</code></pre></div>
+</section>
+<section id="t10" class="topic-section">
+<h2>10. Delivery Details</h2>
+<h3 class="sub-topic">b. Delivery Address</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method. get data and then filter address</p>
+     <div class="block-title">ii. Rule - Filter address</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>
+  function field(value) {
+ 
+    // First function logic
+    let match = null;
+    const extractRegexArr = [
+        /Leveringsadresse\,(.*?\,[0-9]{4}(?:\s\p{L}+){1,3}\.?)\,?/i,
+    ];
+
+    for (let regex of extractRegexArr) {
+        match = value.match(regex);
+        if (match) break;
+    }
+
+    let clearmatch = match ? match[1].trim() : "";
+
+   
+        const cleanRegexArr = [
+           
+            /\,\d{4}\s\p{L}+\s\p{L}+\s\p{L}+$/,
+            /\,\d{4}\s\p{L}+[.,\s]+\p{L}+$/,
+            /\,\d{4}\s\p{L}+$/,
+        ];
+
+        for (let regex of cleanRegexArr) {
+            clearmatch = clearmatch.replace(regex, '').trim();
+        }
+
+        return clearmatch;
+    
+}
+  </code></pre></div>
+<div class="block-title">iii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v => /^[A-Za-zÀàÁáÂâÃãÄäÅåÆæÇçÈèÉéÊêËëÌìÍíÎîÏïÑñÒòÓóÔôÕõÖöØøÙùÚúÛûÜüÝýŸÿŒœ\s\/0-9\-\–\`\'\.\,\)\(\)\&\:\;\´]{3,80}$/.test(v) || 'Invalid Address'</code></pre></div>
+<h3 class="sub-topic">c. Delivery City</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method. get data and then filter city</p>
+     <div class="block-title">ii. Rule - Filter city</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>function field(value) {
+    
+    const delAdd = "%f:Delivery Address%";
+
+    // First function logic
+    let match = null;
+    const extractRegexArr = [
+       /Leveringsadresse\,(.*?\,[0-9]{4}(?:\s\p{L}+){1,3}\.?)\,?/i,
+    ];
+
+    for (let regex of extractRegexArr) {
+        match = value.match(regex);
+        if (match) break;
+    }
+
+    let result = match ? match[1].trim() : "";
+
+    // Second function logic
+    if (result.includes(delAdd)) {
+        let clearmatch = result
+        .replace(delAdd, '')
+        .trim();
+
+        const cleanRegexArr = [
+            
+            /\,\d{4}/
+        ];
+
+        for (let regex of cleanRegexArr) {
+            clearmatch = clearmatch.replace(regex, '').trim();
+        }
+
+        return clearmatch;
+    }
+
+    return "";
+}</code></pre></div>
+<div class="block-title">iii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v => /^[A-Za-zÀàÁáÂâÃãÄäÅåÆæÇçÈèÉéÊêËëÌìÍíÎîÏïÑñÒòÓóÔôÕõÖöØøÙùÚúÛûÜüÝýŸÿŒœ\s\.\,\-]{3,20}$/.test(v) || 'Invalid City'</code></pre></div>
+<h3 class="sub-topic">d. Delivery City Postal Code</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method. get data and then filter postal code</p>
+     <div class="block-title">ii. Rule - Filter postal code</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>
+  function field(value) {
+    
+    const delAdd = "%f:Delivery Address%";
+    const delcity = "%f:Delivery City%";
+
+    // First function logic
+    let match = null;
+    const extractRegexArr = [
+       /Leveringsadresse\,(.*?\,[0-9]{4}(?:\s\p{L}+){1,3}\.?)\,?/i,
+    ];
+
+    for (let regex of extractRegexArr) {
+        match = value.match(regex);
+        if (match) break;
+    }
+
+    let result = match ? match[1].trim() : "";
+
+    // Second function logic
+    if (result.includes(delAdd)&&result.includes(delcity)) {
+        let clearmatch = result
+        .replace(delAdd, '')
+        .replace(delcity, '')
+        .trim();
+
+        const cleanRegexArr = [
+            
+            /\,/
+        ];
+
+        for (let regex of cleanRegexArr) {
+            clearmatch = clearmatch.replace(regex, '').trim();
+        }
+
+        return clearmatch;
+    }
+
+    return "";
+}
+</code></pre></div>
+<div class="block-title">iii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v =>/^[0-9]{4}$/.test(v)|| 'Invalid Postal code'</code></pre></div>
+<h3 class="sub-topic">e. Delivery Country</h3>
+<a href="#t12-getdata" class="block-title">i. Rule</a>
+     <p>You can use location extraction method. get data and then filter country</p>
+<div class="block-title">ii. Validation</div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Validation</button><pre><code>v => /^[A-Z]{2}$/.test(v) || 'Invalid Country code'</code></pre></div>
+
+
+</section>
+<section id="t11" class="topic-section">
+<h2>11. Product Lines</h2>
+<h3 class="sub-topic">a. Description</h3>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Remove invalid</button><pre><code>function field(value) {
+    return !(/Beløb ekskl. moms/.test(value));
+}</
+code></pre></div>
+<h3 class="sub-topic">b. Vat</h3>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Post Rule</button><pre><code>function field(value) {
+    const keyWords = [
+        
+        '25,00 %',
+        '25.00 %',
+        '25,00%',
+        '25.00%',
+        '25 %',
+        '25%'
+      
+    ];
+    for (let word of keyWords) {
+        if (value.includes(word)) {
+            return '25';
+        }
+    }
+    return '0';
+}
+ </
+code></pre></div>
+<h3 class="sub-topic">c. Unit Price</h3>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Pre Rule</button><pre><code>
+  function field(value) {
+ let numericString = value.replace(/[^0-9,.-]/g, '');
+ 
+ const lastCommaPos = numericString.lastIndexOf(',');
+ const lastDotPos = numericString.lastIndexOf('.');
+ 
+ // EU format: comma is last (e.g., "1.724,00")
+ if (lastCommaPos > lastDotPos) {
+   numericString = numericString.replace(/\./g, '').replace(',', '.');
+ } 
+ // US format: dot is last (e.g., "1,724.00")
+ else if (lastDotPos > lastCommaPos) {
+   numericString = numericString.replace(/,/g, '');
+ }
+ 
+ return numericString.replace(/ /g, '');
+}
+
+
+  </code></pre></div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Remove invalid</button><pre><code>
+  function field(value) {
+    return !/[\d\s]+[\.\,]{1}[\d]{2}/.test(value);
+}
+  </code></pre></div>
+<h3 class="sub-topic">d. Quantity</h3>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy Pre Rule</button><pre><code>function field(value) {
+    const unitPrice = "%f:Unit Price%";
+    
+    if (unitPrice.includes('-')){
+        return '-1';
+    }else {
+        return '1';
+    }
+    
+}</code></pre></div>
+</section>
+<section id="t12" class="topic-section">
+<h2>12. Common Rules</h2>
+<h3 id="t12-ocr-extraction" class="sub-topic">a. Ocr Extraction</h3>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>function field(value) {
+    
+    const ocr = "%ocr%";
+    let match = [];
+    const regexArr = [
+        //,
+        ];
+    
+    for(let regex of regexArr){
+        
+        match = ocr.match(regex);
+        
+        if(match) break;
+    }
+    
+    return match ? match[1].trim():"";
+}</code></pre></div>
+<h3 class="sub-topic">b. Location Extraction</h3>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>function field(value) {
+    
+  
+    let match = [];
+    const regexArr = [
+        //,
+        ];
+    
+    for(let regex of regexArr){
+        
+        match = value.match(regex);
+        
+        if(match) break;
+    }
+    
+    return match ? match[1].trim():"";
+}</
+code></pre></div>
+<h3 id="t12-getdata" class="sub-topic">c. Get Data</h3>
+<p>If you want to seperate from comma, remove ".join("*")"</p>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>function fieldValues(value, values)
+{
+	return values.join("*");
+}</code></pre></div>
+<h3 id="t12-getdata" class="sub-topic">d. Remove data from value after extracted from regex array</h3>
+<p>You can insert regex patterns need to remove under cleanupRegexes</p>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>
+  function field(value) { 
+    const ocr = "%ocr%";
+    let match = [];    
+    const regexArr = [
+        
+       /Bilagsdato[:;,.\-\s]+([0-9]+[:;,.\-\s]+[0-9]+[:;,.\-\s]+[0-9]{2,4})/,
+     
+    ];
+    const cleanupRegexes = [
+        
+    ];
+    for (let regex of regexArr) {
+        match = ocr.match(regex);
+        if (match) break;
+    }
+    if (match) {
+        let cleaned = match.slice(1).join('');        
+        for (let rx of cleanupRegexes) {
+            cleaned = cleaned.replace(rx, '');
+        }
+        return cleaned.trim();
+    }
+    return "";
+}
+
+</code></pre></div>
+</section>
+</main>
+<script>
+function copySnippet(buttonElement) {
+// Find the <code> tag that is inside the same container as the clicked button
+const codeBlock = buttonElement.nextElementSibling.querySelector('code');
+const textToCopy = codeBlock.innerText;
+// Execute asynchronous copying API operation
+navigator.clipboard.writeText(textToCopy).then(() => {
+const originalText = buttonElement.innerText;
+buttonElement.innerText = "✓ Copied!";
+buttonElement.classList.add('copied');
+// Revert look back to defaults after a short delay
+setTimeout(() => {
+buttonElement.innerText = originalText;
+buttonElement.classList.remove('copied');
+}, 1800);
+}).catch(err => {
+console.error('Execution Error handling clipboard registry action: ', err);
+});
+}
+</script>
+</body>
+</html>
