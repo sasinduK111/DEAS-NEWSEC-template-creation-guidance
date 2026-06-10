@@ -614,6 +614,7 @@ onclick="copySnippet(this)">Copy</button><pre><code>
 
         const cleanRegexArr = [
             /^[Ww]\w?\d\w?[\d-]+\,/,
+	/^[Ff][\s\-]*[0-9]+\,/,
             /^\,/,
             /\,\d{4}\s\p{L}+\s\p{L}+\s\p{L}+$/,
             /\,\d{4}\s\p{L}+[.,\s]+\p{L}+$/,
@@ -664,6 +665,7 @@ onclick="copySnippet(this)">Copy</button><pre><code>function field(value) {
 
         const cleanRegexArr = [
 /^[Ww]\w?\d\w?[\d-]+\,/,
+/^[Ff][\s\-]*[0-9]+\,/,
             /^\,/,
  /[Ww]\w?\d?\w?[\w-]*$/,
  /[Ff][\s\-]*[0-9]*$/,
@@ -719,6 +721,7 @@ onclick="copySnippet(this)">Copy</button><pre><code>
 
         const cleanRegexArr = [
 /^[Ww]\w?\d\w?[\d-]+\,/,
+/^[Ff][\s\-]*[0-9]+\,/,
             /\,+/,
 /[Ww]\w?\d?\w?[\w-]*$/,
  /[Ff][\s\-]*[0-9]*$/,
@@ -1036,6 +1039,12 @@ onclick="copySnippet(this)">Copy</button><pre><code>function fieldValues(value, 
 {
 	return values.join("*");
 }</code></pre></div>
+<div class="code-container"><button class="copy-btn"
+onclick="copySnippet(this)">Copy</button><pre><code>function fieldValues(value, values)
+{
+	return values;
+}</code></pre></div>
+
 <h3 id="t12-getdata" class="sub-topic">d. Remove data from value after extracted from regex array</h3>
 <p>You can insert regex patterns need to remove under cleanupRegexes</p>
 <div class="code-container"><button class="copy-btn"
